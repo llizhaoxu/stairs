@@ -25,18 +25,17 @@ def parse_args():
     parser = argparse.ArgumentParser('training')
     parser.add_argument('--use_cpu', action='store_true', default=False, help='use cpu mode')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size in training')
+    parser.add_argument('--batch_size', type=int, default=10, help='batch size in training')
     parser.add_argument('--model', default='pointnet', help='model name [default: pointnet_cls]')
-    parser.add_argument('--num_category', default=2, type=int, choices=[10, 40],  help='training on ModelNet10/40')
     parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training')
-    parser.add_argument('--num_point', type=int, default=8196, help='Point Number')
+    parser.add_argument('--num_point', type=int, default=1, help='Point Number')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training')
     parser.add_argument('--log_dir', type=str, default=None, help='experiment root')
     parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate')
     parser.add_argument('--use_normals', action='store_true', default=False, help='use normals')
     parser.add_argument('--process_data', action='store_true', default=True, help='save data offline')
-    parser.add_argument('--use_uniform_sample', action='store_true', default=False, help='use uniform sampiling')
+
     return parser.parse_args()
 
 
@@ -47,7 +46,8 @@ def inplace_relu(m):
 
 
 def test(model, loader):
-    mean_correct = []
+    mean_wide_correct = []
+    mean_height_correct = []
     classifier = model.eval()
 
     for j, (points, target) in tqdm(enumerate(loader), total=len(loader)):
@@ -60,12 +60,13 @@ def test(model, loader):
         pred, _ = classifier(points)
         correct = (pred - target).abs()
         correct_all = (correct / target).sum(dim=0)
-
-        mean_correct.append(correct_all.data.item() / float(points.size()[0]))
-
-    instance_acc = np.mean(mean_correct)
-
-    return 1-instance_acc
+        wide_data = correct_all.data[0].item()
+        height_data = correct_all.data[1].item()
+        mean_wide_correct.append(wide_data / float(points.size()[0]))
+        mean_height_correct.append(height_data / float(points.size()[0]))
+    instance_wide_acc = np.mean(mean_wide_correct)
+    instance_height_acc = np.mean(mean_height_correct)
+    return 1-instance_wide_acc,1-instance_height_acc
 
 
 def main(args):
@@ -155,7 +156,8 @@ def main(args):
     for epoch in range(start_epoch, args.epoch):
         log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
 
-        mean_correct = []
+        mean_wide_correct = []
+        mean_height_correct = []
         classifier = classifier.train()
 
         scheduler.step()
@@ -178,16 +180,22 @@ def main(args):
             loss.backward()
             correct = (pred-target).abs()
             correct_all=(correct/target).sum(dim=0)
-
-            mean_correct.append(correct_all.data.item() / float(points.size()[0]))
+            wide_data=correct_all.data[0].item()
+            height_data=correct_all.data[1].item()
+            mean_wide_correct.append(wide_data / float(points.size()[0]))
+            mean_height_correct.append(height_data / float(points.size()[0]))
             optimizer.step()
             global_step += 1
-        train_acc=np.mean(mean_correct)
+        train_wide_acc=np.mean(mean_wide_correct)
+        train_height_acc = np.mean(mean_height_correct)
         log_string('loss: %f' % loss.data.item())
-        log_string('Train Accuracy: %f' % train_acc)
+        log_string('Train Wide Accuracy: %f' % train_wide_acc)
+        log_string('Train Height Accuracy: %f' % train_height_acc)
         with torch.no_grad():
-            instance_acc = test(classifier.eval(), testDataLoader)
-
+            instance_wide_acc,instance_height_acc = test(classifier.eval(), testDataLoader)
+            log_string('Test Wide Accuracy: %f' % instance_wide_acc)
+            log_string('Test Height Accuracy: %f' % instance_height_acc)
+            instance_acc=(instance_height_acc+instance_wide_acc)/2
             if (instance_acc >= best_instance_acc):
                 best_instance_acc = instance_acc
                 best_epoch = epoch + 1

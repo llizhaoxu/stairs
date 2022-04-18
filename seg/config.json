@@ -15,7 +15,7 @@
     "train_loader": {
         "type": "Stair",
         "args":{
-            "data_dir": "/Users/li/PycharmProjects/stairs/seg",
+            "data_dir": "/root/data/seg",
             "batch_size": 8,
             "base_size": 400,
             "crop_size": 380,
@@ -33,7 +33,7 @@
     "val_loader": {
         "type": "Stair",
         "args":{
-            "data_dir": "/Users/li/PycharmProjects/stairs/seg",
+            "data_dir": "/root/data/seg",
             "batch_size": 8,
             "crop_size": 480,
             "val": true,
@@ -71,7 +71,7 @@
         "log_dir": "saved/runs",
         "log_per_iter": 20,
 
-        "val":false,
+        "val":true,
         "val_per_epochs": 5
     }
 }

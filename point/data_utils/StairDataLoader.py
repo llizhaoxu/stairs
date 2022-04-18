@@ -100,23 +100,23 @@ class StairDataset(data.Dataset):
             imid=self.depth_list[index]
             if self.type=='wide':
                 if imid[3]=='1':
-                    truth = [0.35]
+                    truth = [0.35,0.123]
                 if imid[3]=='2':
-                    truth = [0.354]
+                    truth = [0.354,0.157]
                 if imid[3]=='3':
-                    truth = [0.354]
+                    truth = [0.354,0.157]
                 if imid[3]=='4':
-                    truth = [0.363]
+                    truth = [0.363,0.145]
                 if imid[3]=='5':
-                    truth = [0.305]
+                    truth = [0.305,0.145]
                 if imid[3]=='6':
-                    truth = [0.306]
+                    truth = [0.306,0.148]
                 if imid[3]=='7':
-                    truth = [0.325]
+                    truth = [0.325,0.153]
                 if imid[3]=='8':
-                    truth = [0.35]
+                    truth = [0.35,0.161]
                 if imid[3]=='9':
-                    truth = [0.318]
+                    truth = [0.318,0.155]
             else:
                 if imid[3]=='1':
                     truth = [0.123]
@@ -186,23 +186,23 @@ img_length = 640
 def get_truth(imid,type):
     if type == 'wide':
         if imid[3] == '1':
-            truth = [0.35]
+            truth = [0.35, 0.123]
         if imid[3] == '2':
-            truth = [0.354]
+            truth = [0.354, 0.157]
         if imid[3] == '3':
-            truth = [0.354]
+            truth = [0.354, 0.157]
         if imid[3] == '4':
-            truth = [0.363]
+            truth = [0.363, 0.145]
         if imid[3] == '5':
-            truth = [0.305]
+            truth = [0.305, 0.145]
         if imid[3] == '6':
-            truth = [0.306]
+            truth = [0.306, 0.148]
         if imid[3] == '7':
-            truth = [0.325]
+            truth = [0.325, 0.153]
         if imid[3] == '8':
-            truth = [0.35]
+            truth = [0.35, 0.161]
         if imid[3] == '9':
-            truth = [0.318]
+            truth = [0.318, 0.155]
     else:
         if imid[3] == '1':
             truth = [0.123]

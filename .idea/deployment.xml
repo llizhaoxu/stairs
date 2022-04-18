@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="root@120.224.26.25:13570" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="root@sdly.blockelite.cn:12220" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
       <paths name="root@120.224.26.25:13570">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/root/data" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@sdly.blockelite.cn:12220">
         <serverdata>
           <mappings>
             <mapping deploy="/root/data" local="$PROJECT_DIR$" />
