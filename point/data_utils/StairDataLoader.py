@@ -20,13 +20,17 @@ import cv2
 
 
 class StairDataset(data.Dataset):
-    def __init__(self, mode, num_pt, root,type, process_data=False):
+    def __init__(self, mode, num_pt, root,type, uniform,process_data=False):
+        self.uniform = uniform
         if mode == 'train':
-            self.seg_path = '/root/data/point/data/train_data_seg.txt'
-            self.depth_path = '/root/data/point/data/train_data_depth.txt'
+            self.seg_path = '/home/lzx/stair/point/data/train_data_seg.txt'
+            self.depth_path = '/home/lzx/stair/point/data/train_data_depth.txt'
         if mode == 'test':
-            self.seg_path = '/root/data/point/data/test_data_seg.txt'
-            self.depth_path = '/root/data/point/data/test_data_depth.txt'
+            self.seg_path = '/home/lzx/stair/point/data/test_data_seg.txt'
+            self.depth_path = '/home/lzx/stair/point/data/test_data_depth.txt'
+        # if mode == 'test':
+        #     self.seg_path ='/Users/li/PycharmProjects/stairs/point/data/test_seg.txt'
+        #     self.depth_path = '/Users/li/PycharmProjects/stairs/point/data/test_depth.txt'
         self.num_pt = num_pt
         self.root = root
         self.type=type
@@ -82,7 +86,12 @@ class StairDataset(data.Dataset):
                     seg=self.seg_list[index]
                     truth=get_truth(depth,type)
                     cls = np.array(truth).astype(np.float32)
-                    point_set = get_cloud(self.root,depth,seg,self.num_pt)
+
+                    if self.uniform:
+                        point_set = fps_cloud(self.root,depth,seg,self.num_pt)
+                    else:
+                        point_set = get_cloud(self.root,depth,seg,self.num_pt)
+
                     self.list_of_points[index] = point_set
                     self.list_of_labels[index] = cls
 
@@ -142,6 +151,7 @@ class StairDataset(data.Dataset):
             depth = depth.resize((640, 480), Image.ANTIALIAS)
             depth = np.array(depth)
             mask = Image.open('{0}/segimg/{1}'.format(self.root, self.seg_list[index]))
+            # mask = Image.open('{0}/outputs/{1}'.format(self.root, self.seg_list[index]))
             mask = mask.resize((640, 480), Image.ANTIALIAS)
             mask = np.array(mask)
             mask_depth = ma.getmaskarray(ma.masked_not_equal(depth, 0))
@@ -223,6 +233,37 @@ def get_truth(imid,type):
         if imid[3] == '9':
             truth = [0.354]
     return truth
+def fps_cloud(root,depth,seg,num_pt):
+    cam_scale = 0.0010000000474974513
+    depth = Image.open('{0}/depth/{1}'.format(root, depth))
+    depth = depth.resize((640, 480), Image.ANTIALIAS)
+    depth = np.array(depth)
+    mask = Image.open('{0}/segimg/{1}'.format(root, seg))
+    mask = mask.resize((640, 480), Image.ANTIALIAS)
+    mask = np.array(mask)
+    mask_depth = ma.getmaskarray(ma.masked_not_equal(depth, 0))
+    mask_label = ma.getmaskarray(ma.masked_equal(mask, 1))
+    mask = mask_label * mask_depth
+    rmin, rmax, cmin, cmax = get_bbox(mask_label)
+    choose = mask[rmin:rmax, cmin:cmax].flatten().nonzero()[0]
+
+    cam_cx = 655.9583129882812
+    cam_cy = 352.8207702636719
+    cam_fx = 916.896240234375
+    cam_fy = 917.2578735351562
+    xmap = np.array([[j for i in range(640)] for j in range(480)])
+    ymap = np.array([[i for i in range(640)] for j in range(480)])
+
+    depth_masked = depth[rmin:rmax, cmin:cmax].flatten()[choose][:, np.newaxis].astype(np.float32)
+    xmap_masked = xmap[rmin:rmax, cmin:cmax].flatten()[choose][:, np.newaxis].astype(np.float32)
+    ymap_masked = ymap[rmin:rmax, cmin:cmax].flatten()[choose][:, np.newaxis].astype(np.float32)
+
+    pt2 = depth_masked * cam_scale
+    pt0 = (ymap_masked - cam_cx) * pt2 / cam_fx
+    pt1 = (xmap_masked - cam_cy) * pt2 / cam_fy
+    clouds = np.concatenate((pt0, pt1, pt2), axis=1)
+    point_set = farthest_point_sample(clouds, num_pt)
+    return point_set
 def get_cloud(root,depth,seg,num_pt):
     cam_scale = 0.0010000000474974513
     depth = Image.open('{0}/depth/{1}'.format(root, depth))

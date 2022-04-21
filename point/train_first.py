@@ -25,16 +25,16 @@ def parse_args():
     parser = argparse.ArgumentParser('training')
     parser.add_argument('--use_cpu', action='store_true', default=False, help='use cpu mode')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
-    parser.add_argument('--batch_size', type=int, default=10, help='batch size in training')
-    parser.add_argument('--model', default='pointnet', help='model name [default: pointnet_cls]')
-    parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training')
+    parser.add_argument('--batch_size', type=int, default=16, help='batch size in training')
+    parser.add_argument('--model', default='point+', help='model name [default: pointnet_cls]')
+    parser.add_argument('--epoch', default=80, type=int, help='number of epoch in training')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training')
-    parser.add_argument('--num_point', type=int, default=1, help='Point Number')
+    parser.add_argument('--num_point', type=int, default=8196, help='Point Number')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training')
-    parser.add_argument('--log_dir', type=str, default=None, help='experiment root')
+    parser.add_argument('--log_dir', type=str, default='2022-04-21_11-00', help='experiment root')
     parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate')
     parser.add_argument('--use_normals', action='store_true', default=False, help='use normals')
-    parser.add_argument('--process_data', action='store_true', default=True, help='save data offline')
+    parser.add_argument('--process_data', action='store_true', default=False, help='save data offline')
 
     return parser.parse_args()
 
@@ -107,11 +107,11 @@ def main(args):
 
     '''DATA LOADING'''
     log_string('Load dataset ...')
-    data_path = '/root/data/point/data'
+    data_path = '/home/lzx/stair/point/data'
     type='wide'
 
-    train_dataset = StairDataset(mode='train',num_pt=args.num_point,root=data_path,type=type,process_data=args.process_data)
-    test_dataset = StairDataset(mode='test', num_pt=args.num_point, root=data_path,type=type,process_data=args.process_data)
+    train_dataset = StairDataset(mode='train',num_pt=args.num_point,root=data_path,type=type,process_data=args.process_data,uniform=False)
+    test_dataset = StairDataset(mode='test', num_pt=args.num_point, root=data_path,type=type,process_data=args.process_data,uniform=False)
     trainDataLoader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=16, drop_last=True)
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
                                                   num_workers=16, drop_last=True)
